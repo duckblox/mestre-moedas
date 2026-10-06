@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- 📱 viewport: faz a página caber na tela do celular. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Mestre das Moedas</title>
+
+    <!-- 🎨 CSS: define cores, tamanhos e animações. Cada regra: seletor { propriedade: valor; } -->
+    <style>
+      [hidden] {
+        display: none !important;
+      }
+      /* 🎨 Variáveis de cor: mude --bg e --ac e veja o jogo todo mudar! */
+      :root {
+        --bg: #1a1446;
+        --card: #2b2370;
+        --ink: #fff;
+        --mut: #c9c4ff;
+        --ac: #2ee6b8;
+        --gold: #ffd23f;
+        --red: #ff6b8b;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #0d0a2e;
+          --card: #1c1655;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #0d0a2e;
+        --card: #1c1655;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          22px/1.35 system-ui,
+          sans-serif;
+        text-align: center;
+      }
+      /* 📊 Barra de cima (grid = tabela flexível de 3 colunas) */
+
+      #top {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        padding: 10px;
+        background: var(--card);
+        font-size: 18px;
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        z-index: 5;
+      }
+      #top b {
+        font-size: 24px;
+        color: var(--gold);
+      }
+      #bar {
+        height: 8px;
+        background: #0006;
+        grid-column: 1/-1;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      #bar i {
+        display: block;
+        height: 100%;
+        background: var(--ac);
+      }
+      #v {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 14px 14px 130px;
+      }
+      /* 🃏 .card = a "caixa arredondada" usada em todo o jogo */
+
+      .card {
+        background: var(--card);
+        border-radius: 22px;
+        padding: 18px;
+        margin-bottom: 14px;
+      }
+      .huge {
+        font-size: 56px;
+        margin: 8px 0;
+      }
+      h2 {
+        margin: 4px 0;
+        font-size: 26px;
+      }
+      /* 🔘 .b = botão grande do jogo (.b.g dourado, .b.x vermelho) */
+
+      .b {
+        font: inherit;
+        font-weight: 700;
+        font-size: 24px;
+        border: 0;
+        border-radius: 18px;
+        padding: 16px;
+        background: var(--ac);
+        color: #08203a;
+        width: 100%;
+        margin-top: 12px;
+        cursor: pointer;
+      }
+      .b.g {
+        background: var(--gold);
+      }
+      .b.ok {
+        background: #3ddc84;
+      }
+      .b.x {
+        background: var(--red);
+      }
+      .b:disabled {
+        opacity: 0.4;
+      }
+      .s {
+        font: inherit;
+        background: none;
+        border: 2px solid var(--mut);
+        color: var(--ink);
+        border-radius: 14px;
+        padding: 8px 14px;
+        margin-bottom: 12px;
+      }
+      small {
+        display: block;
+        font-size: 17px;
+        color: var(--mut);
+        font-weight: 400;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      /* 🧭 Menu de baixo, fixo na tela (position: fixed) */
+
+      #n {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: space-around;
+        background: var(--card);
+        padding: 8px 4px calc(8px + env(safe-area-inset-bottom, 0px));
+        z-index: 5;
+      }
+      #n button {
+        font: inherit;
+        font-size: 12px;
+        background: none;
+        border: 0;
+        color: var(--mut);
+        padding: 6px 4px;
+        border-radius: 12px;
+      }
+      #n button span {
+        display: block;
+        font-size: 26px;
+      }
+      #n button.on {
+        background: #ffffff22;
+        color: #fff;
+      }
+      /* 🪟 Janela de aviso por cima de tudo (z-index alto) */
+
+      #m {
+        position: fixed;
+        inset: 0;
+        background: #000b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 20;
+      }
+      #m .card {
+        background: #3a2f9a;
+        max-width: 480px;
+        width: 100%;
+      }
+      .ln {
+        display: flex;
+        justify-content: space-between;
+        font-size: 24px;
+        padding: 4px 0;
+      }
+      #t {
+        position: fixed;
+        left: 50%;
+        top: 90px;
+        transform: translate(-50%, -20px);
+        background: var(--gold);
+        color: #222;
+        border-radius: 16px;
+        padding: 12px 18px;
+        opacity: 0;
+        transition: 0.3s;
+        z-index: 30;
+        max-width: 90%;
+        font-weight: 700;
+        pointer-events: none;
+      }
+      #t.on {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .f {
+        position: fixed;
+        top: -40px;
+        font-size: 34px;
+        pointer-events: none;
+        z-index: 40;
+        animation: f 2s linear forwards;
+      }
+      @keyframes f {
+        to {
+          transform: translateY(110vh) rotate(300deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .f {
+          display: none;
+        }
+      }
+      /* 🎞️ Cenas animadas dos trabalhos (animation + @keyframes) */
+
+      .sc {
+        position: relative;
+        height: 150px;
+        border-radius: 18px;
+        overflow: hidden;
+        font-size: 50px;
+        margin-bottom: 10px;
+      }
+      .sc i {
+        position: absolute;
+        font-style: normal;
+      }
+      .g {
+        background: #256d2c;
+      }
+      .g .cut {
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0;
+        background: #7be07b;
+        animation: w 4s linear forwards;
+      }
+      .g .ac {
+        left: 0;
+        top: 45px;
+        animation: mv 4s linear forwards;
+      }
+      .c {
+        background: linear-gradient(#5aa9e6, #cfeaff);
+      }
+      .c .car {
+        left: 50%;
+        top: 40px;
+        margin-left: -35px;
+        font-size: 70px;
+        filter: grayscale(1) brightness(0.5);
+        animation: cl 4s forwards;
+      }
+      .c .sp {
+        left: 50%;
+        top: 60px;
+        animation: sh 0.35s infinite alternate;
+      }
+      .r {
+        background: #2b2f3a;
+      }
+      .r .st {
+        left: 0;
+        right: 0;
+        top: 72px;
+        height: 6px;
+        background: repeating-linear-gradient(90deg, #ffd23f 0 40px, transparent 40px 80px);
+        animation: rd 4s linear forwards;
+      }
+      .r .ac {
+        left: 12%;
+        top: 45px;
+      }
+      .r .pin {
+        top: 45px;
+        animation: pin 4s linear forwards;
+      }
+      @keyframes mv {
+        to {
+          left: 85%;
+        }
+      }
+      @keyframes w {
+        to {
+          width: 92%;
+        }
+      }
+      @keyframes cl {
+        to {
+          filter: none;
+        }
+      }
+      @keyframes sh {
+        from {
+          transform: translateX(-35px) rotate(-15deg);
+        }
+        to {
+          transform: translateX(35px) rotate(15deg);
+        }
+      }
+      @keyframes rd {
+        to {
+          background-position-x: -900px;
+        }
+      }
+      @keyframes pin {
+        from {
+          left: 92%;
+        }
+        to {
+          left: 32%;
+        }
+      }
+      #n button {
+        flex: 1;
+        min-width: 0;
+      }
+      #m {
+        overflow: auto;
+      }
+      #m .card {
+        max-height: 88vh;
+        overflow: auto;
+      }
+      button {
+        touch-action: manipulation;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      /* 📢 Propaganda simulada */
+
+      #ad {
+        position: fixed;
+        left: 10px;
+        right: 10px;
+        bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+        max-width: 540px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #ff7a18, #af002d);
+        border-radius: 20px;
+        padding: 12px 14px;
+        z-index: 7;
+        text-align: left;
+        font-size: 19px;
+        box-shadow: 0 4px 18px #0008;
+      }
+      #ad small {
+        color: #fff;
+        opacity: 0.95;
+      }
+      #ad .two {
+        margin-top: 8px;
+      }
+      #ad button {
+        font: inherit;
+        font-size: 18px;
+        font-weight: 700;
+        border: 0;
+        border-radius: 14px;
+        padding: 10px;
+        background: #fff;
+        color: #7a1030;
+      }
+      #ad.ok {
+        background: linear-gradient(135deg, #0f9b6e, #2563eb);
+      }
+      #ad .tg {
+        font-size: 13px;
+        letter-spacing: 1px;
+      }
+      .calm .f {
+        display: none;
+      }
+      @keyframes kb {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-34px);
+        }
+      }
+      @keyframes kr {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes kz {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.4);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 🧱 HTML: a estrutura é só um conjunto de "caixas" (div). O JavaScript preenche cada uma. -->
+    <div id="top"></div>
+    <!-- barra de cima: carteira, cofre, relógio e nível -->
+    <div id="av"></div>
+    <!-- avatar e barras de energia, fome, saúde e lazer -->
+    <div id="v"></div>
+    <!-- a TELA atual (casa, trabalho, cofre, loja...) -->
+    <div id="n"></div>
+    <!-- menu de baixo, com as abas -->
+    <div id="m" hidden></div>
+    <!-- janela de aviso (hidden = escondida) -->
+    <div id="ad" hidden></div>
+    <!-- propaganda simulada -->
+    <div id="t"></div>
+    <!-- mensagem rápida (toast) -->
+    <!-- 🧠 JAVASCRIPT: a lógica do jogo. Leia o GUIA logo abaixo. -->
+    <script>
+      /* =====================================================================
+   🗺️ GUIA DO CÓDIGO (leia primeiro!)
+   Este jogo é UM arquivo HTML com 3 partes:
+     1) <style>  → a aparência (cores, tamanhos). CSS.
+     2) <body>   → quase vazio: só "caixas" (div) que o JavaScript preenche.
+     3) <script> → o cérebro do jogo. JavaScript. Você está aqui!
+
+   COMO O JOGO FUNCIONA (o "ciclo"):
+     • G guarda TUDO o que muda: dinheiro (G.c), cofre (G.b), dia (G.d)...
+     • Você clica num botão → uma função muda G → render() redesenha a tela.
+     • save() guarda G no navegador, e o progresso não se perde.
+
+   🛠️ MODO CRIADOR: procure os blocos marcados com "MUDE AQUI" (preços,
+   ganhos, emojis). Troque um número, salve e recarregue a página.
+   Ex.: no sorvete, mude v:8 para v:1. O que acontece?
+   ===================================================================== */
+
+      /* 📚 CONCEITOS PARA APRENDER (e onde achar neste arquivo)
+   • Variáveis e constantes (const, let) ........ logo abaixo, em NEW e G
+   • Listas (arrays) e objetos ................... JOBS, FARM, LOJA (PARTE 3)
+   • Funções ..................................... PARTE 4 (dormir, start, ans)
+   • Condições (if / ?:) e repetições (for, forEach, map) .. dormir()
+   • Texto com ${variável} (template literal) .... PARTE 5, as telas
+   • Eventos (clique) e temporizador (setInterval) .. PARTE 7
+   • Guardar dados no navegador (localStorage) ... save()
+   • CANVAS (desenhar com código) ................ desenhaGrafico(), PARTE 6
+   • Sons com código (Web Audio) ................. bip(), PARTE 2           */
+      /* ==================================================================
+   PARTE 1 — FERRAMENTAS E ESTADO DO JOGO
+   ================================================================== */
+      /* 🔧 Ferramentas pequenas: $ acha um elemento da página; R sorteia um número entre 0 e 1; ri sorteia um número inteiro; brl escreve dinheiro assim: R$ 10,50. */
+      const $ = (id) => document.getElementById(id),
+        R = Math.random,
+        ri = (a, b) => a + Math.floor(R() * (b - a + 1)),
+        r2 = (n) => Math.round(n * 100) / 100,
+        brl = (n) => "R$ " + r2(n).toFixed(2).replace(".", ",").replace(",00", "");
+      /* 💰 RATE é o juro do cofre: .03 = 3% POR DIA (no mundo real é bem menor! aqui é acelerado para você ver o efeito). NEW é o estado inicial do jogo (R$ 20 na carteira). calm = modo calmo, dif = dificuldade das contas (1 fácil, 2 médio, 3 difícil), ads = propagandas simuladas. */
+      const RATE = 0.03,
+        NEW = {
+          c: 20,
+          b: 0,
+          d: 1,
+          xp: 0,
+          ok: 0,
+          pc: 0,
+          pg: [],
+          proj: {},
+          inv: {},
+          pr: {},
+          rq: null,
+          en: 100,
+          div: 0,
+          doente: 0,
+          vc: 0,
+          lt: 0,
+          bk: 0,
+          sg: 0,
+          lz: 80,
+          ads: 0,
+          at: {},
+          calm: 1,
+          dif: 2,
+          vi: 0,
+          h: 7,
+          ch: 0,
+          ov: 0,
+          fz: {},
+        };
+      /* 💾 G começa como uma cópia de NEW; depois, se houver jogo salvo no navegador (localStorage), os dados salvos substituem os iniciais. */
+      let G = structuredClone(NEW);
+      try {
+        Object.assign(G, JSON.parse(localStorage.getItem("cofre2") || "{}"));
+      } catch (e) {}
+      const save = () => {
+        try {
+          localStorage.setItem("cofre2", JSON.stringify(G));
+        } catch (e) {}
+      };
+      /* ==================================================================
+   PARTE 2 — SOM (Web Audio: o navegador cria sons com código)
+   ================================================================== */
+      let ac,
+        som = 1,
+        pz = 0;
+      function bip(a, b, d, w = 0) {
+        if (!som) return;
+        try {
+          ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+          const o = ac.createOscillator(),
+            g = ac.createGain(),
+            t = ac.currentTime + w;
+          o.type = "triangle";
+          o.frequency.setValueAtTime(a, t);
+          o.frequency.exponentialRampToValueAtTime(b, t + d);
+          g.gain.setValueAtTime(0.12, t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+          o.connect(g);
+          g.connect(ac.destination);
+          o.start(t);
+          o.stop(t + d);
+        } catch (e) {}
+      }
+      const SFX = {
+        ad: () => {
+          bip(700, 900, 0.1);
+          bip(900, 1200, 0.15, 0.12);
+        },
+        coin: () => bip(880, 1320, 0.15),
+        pay: () => bip(400, 200, 0.15),
+        pop: () => bip(600, 950, 0.08),
+        bad: () => bip(260, 110, 0.35),
+        up: () => {
+          bip(523, 659, 0.12);
+          bip(659, 784, 0.12, 0.12);
+          bip(784, 1047, 0.3, 0.24);
+        },
+        bell: () => {
+          bip(988, 988, 0.25);
+          bip(1319, 1319, 0.35, 0.25);
+        },
+        sleep: () => {
+          bip(520, 260, 0.5);
+          bip(400, 200, 0.6, 0.4);
+        },
+        egg: () => {
+          bip(700, 500, 0.08);
+          bip(900, 600, 0.1, 0.1);
+        },
+      };
+      const sfx = (k) => SFX[k] && SFX[k]();
+      /* ==================================================================
+   PARTE 3 — DADOS DO JOGO (listas que você pode editar)
+   ================================================================== */
+      /* ⭐ MUDE AQUI: NIV = XP necessário para cada nível. TIT = nome de cada nível. */
+      const NIV = [0, 35, 90, 170, 280, 420, 600, 820, 1100],
+        TIT = [
+          "🌱 Aprendiz",
+          "🚗 Autônomo",
+          "🎬 Criador",
+          "✍️ Blogueiro",
+          "🌐 Dono de site",
+          "📱 Programador",
+          "📚 Autor",
+          "🏭 Investidor",
+          "👑 Mestre das Finanças",
+        ];
+      const lv = () => NIV.filter((x) => G.xp >= x).length;
+      /* 💼 MUDE AQUI: trabalhos. e = emoji, n = nome, l = nível para liberar, v = quanto paga. */
+      /* 🎲 pk(lista) escolhe 1 item ao acaso; mx(lista) embaralha uma cópia. Cada serviço com g:() cria seu próprio desafio: {t: pergunta, r: resposta certa, o: opções}. Quer um serviço novo? Copie uma linha e invente o desafio! */
+      const pk = (a) => a[ri(0, a.length - 1)],
+        mx = (a) => [...a].sort(() => R() - 0.5);
+      const JOBS = [
+        { e: "✂️", n: "Cortar grama", l: 1, v: 8, s: "contas" },
+        { e: "🧼", n: "Lavar carro", l: 1, v: 12, s: "contas", b: "agua" },
+        {
+          e: "🐕",
+          n: "Passear com o cachorro",
+          l: 1,
+          v: 10,
+          s: "distância",
+          g: () => {
+            const a = ri(2, 9),
+              b = ri(2, 9),
+              r = a + b;
+            return {
+              t: `🐕 Ida: ${a} km. Volta: ${b} km. Total de km?`,
+              r,
+              o: [r, r + ri(1, 3), Math.max(0, r - ri(1, 3))],
+            };
+          },
+        },
+        { e: "🚖", n: "Corrida de app", l: 2, v: 20, s: "contas", b: "net" },
+        {
+          e: "🍋",
+          n: "Vender limonada",
+          l: 2,
+          v: 14,
+          s: "lucro",
+          b: "agua",
+          g: () => {
+            const c = ri(2, 8),
+              p = ri(2, 5),
+              k = ri(2, Math.min(9, c * p)),
+              r = c * p - k;
+            return {
+              t: `🍋 Vendeu ${c} copos a R$ ${p} e gastou R$ ${k} nos limões. Qual o lucro?`,
+              r,
+              o: [r, r + ri(1, 3), Math.max(0, r - ri(1, 3))],
+            };
+          },
+        },
+        {
+          e: "📰",
+          n: "Entregar encomendas",
+          l: 2,
+          v: 16,
+          s: "sequência",
+          g: () => {
+            const a = ri(1, 5),
+              d = ri(2, 5),
+              r = a + 3 * d;
+            return { t: `📦 Casas: ${a}, ${a + d}, ${a + 2 * d}, ?`, r, o: [r, r + d, r - 1] };
+          },
+        },
+        {
+          e: "🧮",
+          n: "Completar a tabuada",
+          l: 2,
+          v: 32,
+          s: "tabuada",
+          g: () => {
+            const n = ri(2, [5, 8, 10][G.dif - 1] || 8),
+              m = ri(2, 5),
+              r = n * (m + 1),
+              a = [];
+            for (let i = 1; i <= m; i++) a.push(n * i);
+            return {
+              t: `🧮 Tabuada do ${n}: ${a.join(", ")}, ?`,
+              r,
+              h: `Vá somando ${n} ao último número`,
+              o: [r, r + n, Math.max(1, r - n)],
+            };
+          },
+        },
+        {
+          e: "🛒",
+          n: "Caixa de mercadinho",
+          l: 3,
+          v: 25,
+          s: "troco",
+          b: "luz",
+          g: () => {
+            const m = pk([10, 20]),
+              p = ri(2, m - 1),
+              r = m - p;
+            return {
+              t: `🛒 A compra deu R$ ${p}. O cliente pagou R$ ${m}. Qual o troco?`,
+              r,
+              o: [r, r + ri(1, 3), Math.max(0, r - ri(1, 3))],
+            };
+          },
+        },
+        {
+          e: "🪴",
+          n: "Cuidar de plantas",
+          l: 3,
+          v: 22,
+          s: "calendário",
+          b: "agua",
+          g: () => {
+            const d = ri(1, 10),
+              k = ri(2, 4),
+              r = d + k;
+            return {
+              t: `🪴 Regar a cada ${k} dias. Hoje é o dia ${d}. Quando regar de novo?`,
+              r,
+              o: [r, r + 1, r - 1],
+            };
+          },
+        },
+        {
+          e: "🚲",
+          n: "Consertar bicicletas",
+          l: 4,
+          v: 30,
+          s: "ordem",
+          g: () => {
+            const p = mx(["🔩", "⚙️", "🛞", "🔧", "⛓️"]);
+            return {
+              t: `🚲 Monte na ordem certa: ${p[0]}${p[1]}${p[0]}${p[1]}${p[0]} ?`,
+              r: p[1],
+              o: [p[1], p[0], p[2]],
+            };
+          },
+        },
+        {
+          e: "📸",
+          n: "Fotografar eventos",
+          l: 4,
+          v: 28,
+          s: "padrões",
+          g: () => {
+            const c = mx(["🔴", "🟢", "🔵", "🟡", "🟣"]);
+            return {
+              t: `📸 Qual cor completa? ${c[0]}${c[1]}${c[2]}${c[0]}${c[1]}?`,
+              r: c[2],
+              o: [c[0], c[1], c[2]],
+            };
+          },
+        },
+        {
+          e: "🎮",
+          n: "Testar jogos (achar bugs)",
+          l: 5,
+          v: 40,
+          s: "atenção",
+          b: "net",
+          g: () => {
+            const k = ri(1, 5),
+              a = [];
+            for (let i = 0; i < 12; i++) a.push(i < k ? "🐞" : "🟩");
+            return {
+              t: `🎮 Quantos bugs 🐞 há? ${mx(a).join("")}`,
+              r: k,
+              o: [k, k + 1, Math.max(0, k - 1)],
+            };
+          },
+        },
+        {
+          e: "🎨",
+          n: "Desenhar skins",
+          l: 5,
+          v: 45,
+          s: "cores",
+          b: "luz",
+          g: () => {
+            const t = pk([
+                ["🔴", "🔵", "🟣"],
+                ["🔵", "🟡", "🟢"],
+                ["🔴", "🟡", "🟠"],
+              ]),
+              o = mx(["🟣", "🟢", "🟠", "🟤"]).filter((x) => x != t[2]);
+            return { t: `🎨 Misture ${t[0]} + ${t[1]} = ?`, r: t[2], o: [t[2], o[0], o[1]] };
+          },
+        },
+        {
+          e: "🤖",
+          n: "Programar um robô",
+          l: 6,
+          v: 55,
+          s: "algoritmo",
+          b: "net",
+          g: () => {
+            const x = ri(1, 4),
+              y = ri(1, 3),
+              r = `${x}➡️ ${y}⬆️`,
+              c = [`${y}➡️ ${x}⬆️`, `${x + 1}➡️ ${y}⬆️`, `${x}➡️ ${y + 1}⬆️`].filter((z) => z != r),
+              m = [];
+            for (let i = 0; i < x; i++) m.push("➡️");
+            for (let i = 0; i < y; i++) m.push("⬆️");
+            return { t: `🤖 O robô andou: ${mx(m).join("")} Onde chegou?`, r, o: [r, c[0], c[1]] };
+          },
+        },
+        {
+          e: "🎬",
+          n: "Editar vídeos",
+          l: 6,
+          v: 60,
+          s: "ordem das cenas",
+          b: "net",
+          g: () => {
+            const S = [
+                ["🥚", "🐣", "🐥", "🐔"],
+                ["🌱", "🌿", "🌳", "🍎"],
+                ["🌑", "🌓", "🌕", "🌗"],
+                ["☁️", "🌧️", "🌈", "☀️"],
+              ],
+              q = pk(S),
+              f = mx(S.flat().filter((z) => !q.includes(z)));
+            return {
+              t: `🎬 Qual cena vem depois? ${q[0]} → ${q[1]} → ${q[2]} → ?`,
+              r: q[3],
+              o: [q[3], f[0], f[1]],
+            };
+          },
+        },
+      ];
+      /* 🚀 MUDE AQUI: projetos que rendem dinheiro todo dia. c = custo, r = rendimento por dia. Quanto tempo leva para se pagar? c ÷ r ! */
+      const PROJ = [
+        { id: "video", e: "📹", n: "Vídeo monetizado", l: 3, c: 60, r: 5 },
+        { id: "blog", e: "✍️", n: "Blog monetizado", l: 4, c: 120, r: 9 },
+        { id: "site", e: "🌐", n: "Site monetizado", l: 5, c: 250, r: 18 },
+        { id: "app", e: "📱", n: "App monetizado", l: 6, c: 500, r: 35 },
+        { id: "livro", e: "📚", n: "Livro publicado", l: 7, c: 400, r: 30 },
+        { id: "curso", e: "🎓", n: "Curso online monetizado", l: 8, c: 700, r: 55 },
+        { id: "loja", e: "🛍️", n: "Loja online", l: 9, c: 1000, r: 80 },
+        { id: "cam", e: "📷", n: "Câmera: vender fotos", l: 3, c: 180, r: 14 },
+        { id: "pced", e: "🖥️", n: "Computador de edição de vídeo", l: 4, c: 450, r: 32 },
+        { id: "trator", e: "🚜", n: "Trator para a fazenda", l: 5, c: 350, r: 26 },
+        { id: "camin", e: "🚚", n: "Caminhão de entregas", l: 6, c: 600, r: 45 },
+      ];
+      PROJ.sort((a, b) => a.l - b.l);
+      /* 💸 MUDE AQUI: mercadorias para comprar barato e vender caro. b = preço base; o preço do dia varia sorteado. */
+      const MERC = [
+        { id: "jogo", e: "🎮", n: "Jogo usado", b: 30, l: 2 },
+        { id: "fone", e: "🎧", n: "Fone de ouvido", b: 50, l: 2 },
+        { id: "livro", e: "📖", n: "Livro usado", b: 20, l: 2 },
+        { id: "bola", e: "⚽", n: "Bola de futebol", b: 40, l: 2 },
+        { id: "skate", e: "🛹", n: "Skate", b: 70, l: 3 },
+        { id: "relogio", e: "⌚", n: "Relógio", b: 90, l: 3 },
+        { id: "bike", e: "🚲", n: "Bicicleta usada", b: 150, l: 4 },
+        { id: "cel", e: "📱", n: "Celular usado", b: 200, l: 5 },
+        { id: "note", e: "💻", n: "Notebook usado", b: 300, l: 6 },
+      ];
+      /* 🛒 MUDE AQUI: a loja. v = preço. Itens com k são investimentos (dão vantagem); os outros são lazer. */
+      const LOJA = [
+        { e: "🍦", n: "Sorvete", v: 8, t: "Lazer · +8 de energia", en: 8 },
+        { e: "🍔", n: "Lanche gostoso", v: 15, t: "Lazer · +15 de energia", en: 15 },
+        { e: "🎬", n: "Cinema", v: 25, t: "Lazer" },
+        { e: "🍕", n: "Pizza com a família", v: 30, t: "Lazer · +25 de energia", en: 25 },
+        { e: "🎁", n: "Presente para alguém", v: 35, t: "Generosidade" },
+        { e: "🛡️", n: "Seguro saúde", v: 60, t: "Investimento: o médico custa só R$ 10", k: "sg" },
+        { e: "👟", n: "Tênis novo", v: 80, t: "Desejo" },
+        { e: "🚲", n: "Bicicleta", v: 150, t: "Investimento: trabalhos pagam +15%", k: "bk" },
+        { e: "💻", n: "Computador novo", v: 400, t: "Investimento: trabalhos pagam +30%", k: "pc" },
+      ];
+      /* 🔌 CONTAS ATRASADAS: se faltar dinheiro, a conta vira "atrasada" (G.at). 1 dia: multa de 10%. 2 dias: o serviço é CORTADO e os trabalhos/projetos ligados a ele ficam bloqueados (b:'luz', 'agua' ou 'net'). Ao pagar, tudo volta (com taxa de religação de R$ 5). cut('luz') diz se a luz está cortada. */
+      const BILL = {
+          luz: { e: "💡", n: "Conta de luz" },
+          agua: { e: "💧", n: "Conta de água" },
+          net: { e: "🌐", n: "Internet" },
+        },
+        ONLINE = ["video", "blog", "site", "app", "curso", "loja"];
+      const cut = (id) => !!(G.at[id] && G.at[id].d >= 2);
+      const atCards = () =>
+        Object.keys(G.at)
+          .map((id) => {
+            const a = G.at[id],
+              b = BILL[id],
+              c = a.d >= 2,
+              t = a.v + (c ? 5 : 0);
+            return `<div class=card style="background:${c ? "#7a2a2a" : "#7a5a1a"}"><div class=huge>${b.e}</div><h2>${c ? "🔌 " + b.n + ": CORTADO" : b.n + " atrasada"}</h2><small>${c ? "Os serviços ligados a isso estão bloqueados. Pague " + brl(t) + " (inclui R$ 5 de religação)." : "Multa de 10% no 1º dia. Depois de 2 dias, o serviço é cortado."}</small><button class="b g" data-c="pagaAt('${id}')">Pagar ${brl(t)}</button></div>`;
+          })
+          .join("");
+      function pagaAt(id) {
+        const a = G.at[id];
+        if (!a) return;
+        if (pagar(a.v + (a.d >= 2 ? 5 : 0))) {
+          const c = a.d >= 2;
+          delete G.at[id];
+          chuva("✅", 5);
+          say(c ? "🔌 Serviço religado!" : "✅ Conta paga!");
+          save();
+          render();
+        }
+      }
+      const tasks = (d) => [
+        ...(d % 3 == 0 ? [{ id: "luz", e: "💡", n: "Conta de luz", v: 12 }] : []),
+        ...(d % 4 == 0 ? [{ id: "agua", e: "💧", n: "Conta de água", v: 10 }] : []),
+        ...(d % 5 == 0 ? [{ id: "net", e: "🌐", n: "Internet", v: 15 }] : []),
+      ];
+      const MC = 4,
+        MEAL = [
+          { id: "cafe", e: "🥣", n: "Café da manhã", a: 7, z: 10 },
+          { id: "almoco", e: "🍲", n: "Almoço", a: 12, z: 15 },
+          { id: "jantar", e: "🍝", n: "Jantar", a: 18, z: 21 },
+        ];
+      /* 🌱 MUDE AQUI: a fazenda. c = custo, g = dias para crescer, v = valor da colheita. Árvores (tree:1) dão fruta de novo e de novo. */
+      const FARM = [
+        { id: "alface", e: "🥬", n: "Alface", l: 1, c: 5, g: 2, v: 12, tree: 0 },
+        { id: "laranja", e: "🍊", n: "Laranjeira", l: 2, c: 50, g: 3, rep: 2, v: 18, tree: 1 },
+        { id: "maca", e: "🍎", n: "Macieira", l: 3, c: 80, g: 4, rep: 3, v: 36, tree: 1 },
+        { id: "tomate", e: "🍅", n: "Tomate", l: 2, c: 15, g: 3, v: 30, tree: 0 },
+        { id: "morango", e: "🍓", n: "Morango", l: 3, c: 30, g: 4, v: 55, tree: 0 },
+        { id: "banana", e: "🍌", n: "Bananeira", l: 4, c: 120, g: 5, rep: 3, v: 55, tree: 1 },
+      ];
+      const fome = () => MEAL.some((m) => G.h >= m.z && !G.pg.includes(m.id)),
+        fraco = () => !G.calm && (fome() || G.en < 20 || G.lz < 20 || G.doente),
+        lzg = (it) => Math.min(60, Math.round(8 + it.v * 0.6));
+      const AV = {
+        feliz: ["#ffcf9e", "c", "smile"],
+        comer: ["#ffcf9e", "c", "o"],
+        fome: ["#f2c28f", "c", "flat"],
+        sono: ["#f2c28f", "z", "flat"],
+        cansado: ["#e8c2a0", "z", "sad"],
+        doente: ["#b9e0a0", "x", "wavy"],
+        devendo: ["#e8c2a0", "s", "sad"],
+        devendo2: ["#d9b3a0", "s", "sad"],
+        tedio: ["#f2c28f", "c", "sad"],
+      };
+      const TX = {
+        feliz: "Feliz! 😄",
+        comer: "Com fome! 🍽️",
+        fome: "Pulou refeição 😟",
+        sono: "Com sono 💤",
+        cansado: "Muito cansado 😩",
+        doente: "Doente! 🤒",
+        devendo: "Abatido: devendo ao banco 😞",
+        devendo2: "Muito abatido: dívida alta 😰",
+        tedio: "Entediado 🥱 Quer se divertir",
+      };
+      function mood() {
+        return G.doente
+          ? "doente"
+          : G.div >= 100
+            ? "devendo2"
+            : G.div > 0
+              ? "devendo"
+              : G.en < 20
+                ? "cansado"
+                : fome()
+                  ? "fome"
+                  : G.lz < 20
+                    ? "tedio"
+                    : G.h >= 21
+                      ? "sono"
+                      : MEAL.some((x) => G.h >= x.a && G.h < x.z && !G.pg.includes(x.id))
+                        ? "comer"
+                        : "feliz";
+      }
+      function avatar(k) {
+        const [sk, ey, mo] = AV[k];
+        const e =
+          ey == "c"
+            ? "<circle cx=38 cy=50 r=5 /><circle cx=62 cy=50 r=5 />"
+            : ey == "z"
+              ? '<path d="M31 51H45M55 51H69" stroke="#222" stroke-width=4 />'
+              : ey == "x"
+                ? '<path d="M33 45l10 10M43 45l-10 10M57 45l10 10M67 45l-10 10" stroke="#222" stroke-width=3 />'
+                : '<circle cx=38 cy=53 r=4 /><circle cx=62 cy=53 r=4 /><path d="M30 42l14 5M70 42l-14 5M32 62h12M56 62h12" stroke="#222" stroke-width=3 />';
+        const m =
+          mo == "o"
+            ? '<ellipse cx=50 cy=72 rx=7 ry=9 fill="#7a2a2a" />'
+            : `<path d="${{ smile: "M34 66Q50 84 66 66", sad: "M36 78Q50 64 64 78", flat: "M38 72H62", wavy: "M34 72q8-8 16 0t16 0" }[mo]}" stroke="#7a2a2a" stroke-width=4 fill=none stroke-linecap=round />`;
+        return `<svg viewBox="0 0 100 100" width=84 height=84><circle cx=50 cy=56 r=34 fill="${sk}"/><path d="M16 52Q14 8 50 8Q86 8 84 52Q72 28 50 28Q28 28 16 52Z" fill="#5b3a1e"/><g fill="#222">${e}</g>${m}</svg>`;
+      }
+      const bar = (e, v) =>
+        `<div style="display:flex;align-items:center;gap:6px;font-size:16px">${e}<div style="flex:1;height:10px;background:#0006;border-radius:6px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(0, Math.min(100, v))}%;background:${v < 35 ? "var(--red)" : v < 65 ? "var(--gold)" : "var(--ac)"}"></i></div></div>`;
+      function avBar() {
+        const k = mood(),
+          c = MEAL.filter((x) => G.h >= x.z && !G.pg.includes(x.id)).length,
+          fd =
+            100 -
+            c * 35 -
+            (MEAL.some((x) => G.h >= x.a && G.h < x.z && !G.pg.includes(x.id)) ? 25 : 0);
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;max-width:560px;margin:0 auto">${avatar(k)}<div style="flex:1;text-align:left"><b>${TX[k]}</b>${bar("⚡", G.en)}${bar("🍽️", fd)}${bar("❤️", G.doente ? 25 : G.div > 0 ? Math.max(40, 100 - G.div / 2) : 100)}${bar("🎈", G.lz)}${fraco() ? "<small>Trabalhos pagam metade</small>" : ""}</div><button class=s style="margin:0;padding:8px" data-c="go('nb')">💻<small style="font-size:12px">Notebook</small></button></div>`;
+      }
+      const emprCard = () =>
+        `<div class=card>🏦 Empréstimo<small>Você pega agora, mas a dívida cresce 5% por dia, mais que os 3% do cofre, e deixa você abatido</small>Dívida: <b>${brl(G.div)}</b><button class="b g" ${G.div >= 150 ? "disabled" : ""} data-c="emp()">Pegar R$ 50</button><button class=b ${G.div > 0 && G.c > 0 ? "" : "disabled"} data-c="quita()">Pagar dívida</button></div>`;
+      /* ==================================================================
+   PARTE 4 — AÇÕES (funções que mudam o jogo)
+   ================================================================== */
+      function exp(v) {
+        const o = lv();
+        G.xp += v;
+        if (lv() > o) {
+          sfx("up");
+          chuva("⭐", 14);
+          say("🎉 Nível novo: " + TIT[lv() - 1] + "!");
+        }
+      }
+      function vaca() {
+        if (G.vc < 3 && pagar(150)) {
+          G.vc++;
+          sfx("egg");
+          save();
+          render();
+        }
+      }
+      function leite() {
+        if (G.lt > 0) {
+          ganha(G.lt * 12);
+          chuva("🥛", 8);
+          G.lt = 0;
+          save();
+          render();
+        }
+      }
+      let adT;
+      function showAd() {
+        const tot = G.c + G.b,
+          pl = PROJ.filter((p) => !G.proj[p.id]);
+        if (pl.length && R() < 0.6) {
+          const p = pl[ri(0, Math.min(2, pl.length - 1))],
+            st =
+              lv() < p.l
+                ? "🔒 Libera no nível " + p.l + " (faltam " + (NIV[p.l - 1] - G.xp) + " XP)"
+                : tot >= p.c
+                  ? "✅ Você já pode criar!"
+                  : "Faltam " + brl(p.c - tot) + " para conquistar";
+          $("ad").className = "ok";
+          $("ad").innerHTML =
+            `<div class=tg>📢 PROPAGANDA DE INVESTIMENTO 🌱</div><div style="display:flex;gap:10px;align-items:center"><span style="font-size:44px">${p.e}</span><div><b>${p.n}: ${brl(p.c)} e rende ~${brl(p.r)} por dia!</b><small>Se paga em ${Math.ceil(p.c / p.r)} dias. ${st}</small></div></div><div class=two><button data-c="adGo('proj')">Ver Projetos</button><button data-c="adX()">✕ Fechar</button></div>`;
+        } else {
+          const c = LOJA.filter((it) => !(it.k && G[it.k])),
+            x = c[ri(0, c.length - 1)];
+          let e = x.e,
+            tx = x.n + " por " + brl(x.v),
+            v = x.v;
+          const tips = [
+            "Você precisa ou só quer? 🤔",
+            "Dá para esperar e guardar? 🏦",
+            "Guardando, em 10 dias seria " + brl(v * Math.pow(1 + RATE, 10)),
+            "Propaganda quer que você compre. Você decide!",
+            "Cabe no seu orçamento?",
+          ];
+          $("ad").className = "";
+          $("ad").innerHTML =
+            `<div class=tg>📢 PROPAGANDA</div><div style="display:flex;gap:10px;align-items:center"><span style="font-size:44px">${e}</span><div><b>OFERTA: ${tx}!</b><small>${tips[ri(0, tips.length - 1)]}</small></div></div><div class=two><button data-c="adGo()">Ver na Loja</button><button data-c="adX()">✕ Fechar</button></div>`;
+        }
+        $("ad").hidden = false;
+        sfx("ad");
+        clearTimeout(adT);
+        adT = setTimeout(adX, 9000);
+      }
+      function adX() {
+        $("ad").hidden = true;
+        clearTimeout(adT);
+      }
+      function adGo(t) {
+        adX();
+        go(t || "loja");
+      }
+      function tAds() {
+        G.ads = G.ads ? 0 : 1;
+        if (!G.ads) adX();
+        save();
+        render();
+      }
+      function emp() {
+        if (G.div >= 150) return;
+        G.c = r2(G.c + 50);
+        G.div = r2(G.div + 50);
+        sfx("bad");
+        say("🏦 Cuidado: a dívida cresce 5% por dia!");
+        save();
+        render();
+      }
+      function quita() {
+        const v = Math.min(G.c, G.div);
+        if (v <= 0) return;
+        G.c = r2(G.c - v);
+        G.div = r2(G.div - v);
+        sfx("coin");
+        say(G.div ? "Pagou " + brl(v) + ". Ainda deve " + brl(G.div) : "🎉 Dívida paga!");
+        save();
+        render();
+      }
+      function medico() {
+        if (pagar(G.sg ? 10 : 25)) {
+          G.doente = 0;
+          chuva("💊", 6);
+          say("💊 Você melhorou!");
+          save();
+          render();
+        }
+      }
+      const clk = () =>
+        String(Math.floor(G.h)).padStart(2, "0") +
+        ":" +
+        String(Math.floor((G.h % 1) * 60)).padStart(2, "0");
+      const SC0 = [
+        '<div class="sc g"><i class=cut></i><i class=ac>🚜</i></div>',
+        '<div class="sc c"><i class=car>🚗</i><i class=sp>🧽</i></div>',
+        '<div class="sc r"><i class=st></i><i class=ac>🚖</i><i class=pin>📍</i></div>',
+      ];
+      const REQ = [
+        "Seu vizinho pediu para cortar a grama",
+        "Uma moça pediu para lavar o carro dela",
+        "Alguém pediu para passear com o cachorro",
+        "Um cliente pediu uma corrida",
+        "Uma criança pediu limonada para a festa",
+        "Pediram entrega de encomendas",
+        "Uma professora pediu ajuda com a tabuada",
+        "O mercadinho precisa de um caixa",
+        "Uma vizinha viajou e pediu cuidado com as plantas",
+        "Um menino pediu conserto de bicicleta",
+        "Uma festa pediu um fotógrafo",
+        "Um estúdio precisa testar um jogo",
+        "Um jogador quer uma skin nova",
+        "Uma feira quer um robô programado",
+        "Um canal precisa de um editor de vídeo",
+      ];
+      /* 🎞️ Cenas animadas: scn(fundo, emoji que se mexe, emoji parado, animação). mv = anda, kb = pula, kr = gira, kz = pulsa. */
+      const scn = (bg, a, b, an) =>
+        `<div class=sc style="background:${bg}"><i style="left:8%;top:40px;animation:${an} 4s ${an == "mv" ? "linear forwards" : "ease-in-out infinite"}">${a}</i><i style="right:10%;top:58px;font-size:42px">${b}</i></div>`;
+      const SC = [
+        SC0[0],
+        SC0[1],
+        scn("#9be37b", "🚶🐕", "🌳", "mv"),
+        SC0[2],
+        scn("#ffe8a3", "🍋", "🥤", "kb"),
+        scn("#cfe8ff", "🛵", "🏠", "mv"),
+        scn("#fff3b0", "🧮", "🔢", "kb"),
+        scn("#e6d5ff", "🧾", "💵", "kz"),
+        scn("#bff0c4", "💧", "🪴", "kb"),
+        scn("#d9d9d9", "🔧", "🚲", "kr"),
+        scn("#2b2f3a", "📸", "🌅", "kz"),
+        scn("#1c2a4a", "🐞", "🎮", "mv"),
+        scn("#ffd6f0", "🎨", "👕", "kz"),
+        scn("#12324a", "🤖", "⭐", "mv"),
+        scn("#3a2a2a", "🎬", "🎞️", "kr"),
+      ];
+      const reqPay = (i) =>
+        Math.round(
+          JOBS[i].v *
+            (G.pc && !cut("luz") ? 1.3 : 1) *
+            (G.bk ? 1.15 : 1) *
+            (fraco() ? 0.5 : 1) *
+            1.5,
+        );
+      const reqCard = () =>
+        G.rq
+          ? `<div class=card style="background:#7a2a5a"><div class=huge>📩</div>${REQ[G.rq.i]}<small>Paga +50% · a conta é um pouco mais difícil</small><button class="b g" data-c="pedido()">${JOBS[G.rq.i].e} Aceitar ${brl(reqPay(G.rq.i))}</button></div>`
+          : "";
+      function pedido() {
+        const r = G.rq;
+        if (!r) return;
+        G.rq = null;
+        start(r.i, 1);
+      }
+      let T = "casa",
+        Q = null,
+        M = null,
+        N = "";
+      const newPrices = () =>
+        MERC.forEach((m) => (G.pr[m.id] = Math.round(m.b * (0.7 + R() * 0.7))));
+      if (MERC.some((m) => !G.pr[m.id])) newPrices();
+      function say(t) {
+        const d = $("t");
+        d.textContent = t;
+        d.classList.add("on");
+        clearTimeout(say.h);
+        say.h = setTimeout(() => d.classList.remove("on"), 3500);
+      }
+      function chuva(e, n) {
+        for (let i = 0; i < n; i++) {
+          const d = document.createElement("div");
+          d.className = "f";
+          d.textContent = e;
+          d.style.cssText = `left:${R() * 92}vw;animation-delay:${R() * 0.7}s`;
+          document.body.appendChild(d);
+          setTimeout(() => d.remove(), 3000);
+        }
+      }
+      function ganha(v) {
+        const o = lv();
+        G.c = r2(G.c + v);
+        G.xp += v;
+        sfx("coin");
+        if (lv() > o) {
+          sfx("up");
+          chuva("⭐", 14);
+          say("🎉 Nível novo: " + TIT[lv() - 1] + "!");
+        }
+      }
+      function pagar(v) {
+        if (G.c + G.b < v) {
+          say("Falta dinheiro! Trabalhe 💼 ou, se precisar mesmo, peça empréstimo no 🏦 Cofre");
+          sfx("bad");
+          return false;
+        }
+        let f = v;
+        const w = Math.min(f, G.c);
+        G.c = r2(G.c - w);
+        f -= w;
+        if (f > 0) {
+          G.b = r2(G.b - f);
+          say("Usou " + brl(f) + " do cofre. Ele vai render menos! 🏦");
+        }
+        sfx("pay");
+        return true;
+      }
+      function go(t) {
+        T = t;
+        Q = null;
+        N = "";
+        render();
+      }
+      function pay(id) {
+        const t = tasks(G.d).find((x) => x.id == id);
+        if (pagar(t.v)) {
+          G.pg.push(id);
+          chuva("✅", 5);
+          save();
+          render();
+        }
+      }
+      /* 😴 DORMIR = passar o dia. Aqui o jogo paga contas, soma juros do cofre, rende os projetos e sorteia um possível resfriado (só fora do modo calmo). */
+      function dormir() {
+        const L = [],
+          j = r2(G.b * RATE),
+          ms = MEAL.filter((m) => G.h >= m.z && !G.pg.includes(m.id)).length,
+          rk = G.calm ? 0 : ms * 25 + (G.en < 25 ? 25 : 0) + (G.div > 0 ? 10 : 0);
+        /* cada noite, contas atrasadas ganham 1 dia: dia 1 = multa de 10%, dia 2 = corte */
+        Object.keys(G.at).forEach((id) => {
+          const a = G.at[id],
+            b = BILL[id];
+          a.d++;
+          if (a.d == 1) {
+            a.v = Math.round(a.v * 1.1);
+            L.push([b.e, b.n + ": multa de 10%", "⚠️"]);
+          } else if (a.d == 2) L.push([b.e, b.n + " CORTADO 🔌 Pague para religar", "⚠️"]);
+        });
+        tasks(G.d).forEach((t) => {
+          if (!G.pg.includes(t.id)) {
+            if (pagar(t.v)) L.push([t.e, t.n + " (pago ao dormir)", -t.v]);
+            else if (!G.at[t.id]) {
+              G.at[t.id] = { v: t.v, d: 0 };
+              L.push([t.e, t.n + " ATRASADA: pague logo!", "⚠️"]);
+            }
+          }
+        });
+        G.d++;
+        G.h = 7;
+        G.pg = [];
+        G.rq = null;
+        Q = null;
+        G.en = 100;
+        if (!G.doente && R() * 100 < rk) {
+          G.doente = 1;
+          L.push(["🤒", "Você acordou doente! Vá ao médico", "⚠️"]);
+        }
+        if (G.div > 0) {
+          const q = r2(G.div * 0.05);
+          G.div = r2(G.div + q);
+          L.push(["🏦", "Banco: juros da dívida. Você deve " + brl(G.div), -q]);
+        }
+
+        if (j > 0) {
+          G.b = r2(G.b + j);
+          L.push(["✨", "Juros do cofre", j]);
+        }
+        PROJ.forEach((p) => {
+          if (G.proj[p.id] && ONLINE.includes(p.id) && cut("net"))
+            L.push([p.e, p.n + " parado: sem internet", "⚠️"]);
+          else if (G.proj[p.id]) {
+            const v = Math.round(p.r * (0.6 + R() * 0.8));
+            ganha(v);
+            L.push([p.e, p.n, v]);
+          }
+        });
+        if (G.ch) {
+          if (pagar(G.ch)) {
+            L.push(["🐔", "Ração das galinhas", -G.ch]);
+            G.ov += G.ch;
+            L.push(["🥚", G.ch + " ovo(s) coletado(s)", "✅"]);
+          } else L.push(["🐔", "Sem ração, sem ovos", "⚠️"]);
+        }
+        FARM.forEach((f) => {
+          const x = G.fz[f.id];
+          if (x && x.r <= G.d) L.push([f.e, f.n + " pronto!", "✅"]);
+        });
+        if (G.vc) {
+          const rc = G.vc * 3;
+          if (pagar(rc)) {
+            L.push(["🐄", "Ração das vacas", -rc]);
+            G.lt += G.vc;
+            L.push(["🥛", G.vc + " leite(s) coletado(s)", "✅"]);
+          } else L.push(["🐄", "Sem ração, sem leite", "⚠️"]);
+        }
+
+        exp(10);
+        L.push(["⭐", "Mais um dia vivido", "+10 XP"]);
+        if (G.d % 7 == 1) {
+          G.c = r2(G.c + 20);
+          L.push(["🎂", "Mais uma semana! Prêmio de dedicação", 20]);
+        }
+        newPrices();
+        M = L;
+        sfx("sleep");
+        setTimeout(() => sfx("bell"), 900);
+        chuva("🪙", 10);
+        save();
+        render();
+      }
+      function come(id) {
+        if (pagar(MC)) {
+          G.pg.push(id);
+          G.en = Math.min(100, G.en + 10);
+          chuva("🍽️", 6);
+          save();
+          render();
+        }
+      }
+      function plantar(id) {
+        const f = FARM.find((x) => x.id == id);
+        if (pagar(f.c)) {
+          G.fz[id] = { r: G.d + f.g };
+          chuva("🌱", 5);
+          save();
+          render();
+        }
+      }
+      function colher(id) {
+        const f = FARM.find((x) => x.id == id),
+          x = G.fz[id];
+        if (!x || x.r > G.d || cut("agua")) return;
+        ganha(f.v);
+        if (f.tree) x.r = G.d + f.rep;
+        else delete G.fz[id];
+        chuva(f.e, 8);
+        save();
+        render();
+      }
+      function galinha() {
+        if (G.ch < 5 && pagar(30)) {
+          G.ch++;
+          sfx("egg");
+          save();
+          render();
+        }
+      }
+      function ovos() {
+        if (G.ov > 0) {
+          ganha(G.ov * 4);
+          chuva("🥚", 8);
+          G.ov = 0;
+          save();
+          render();
+        }
+      }
+      function tSom() {
+        som = !som;
+        render();
+      }
+      function pausa() {
+        pz = !pz;
+        render();
+      }
+      /* 🧮 TRABALHAR: cria uma pergunta de matemática. O nível da conta depende de quantos acertos você já fez (G.ok) e do limite G.dif escolhido em "Sobre". */
+      function start(i, rq) {
+        if (JOBS[i].b && cut(JOBS[i].b)) {
+          say("🔌 Serviço cortado. Pague a conta na Casa.");
+          return;
+        }
+        const j = JOBS[i],
+          f = Math.round(
+            j.v *
+              (G.pc && !cut("luz") ? 1.3 : 1) *
+              (G.bk ? 1.15 : 1) *
+              (fraco() ? 0.5 : 1) *
+              (rq ? 1.5 : 1),
+          ),
+          m = Math.min(G.dif, 1 + Math.floor(G.ok / 6) + (rq ? 1 : 0));
+        let a, b, r, t, O, H;
+        if (j.g) {
+          const q = j.g();
+          t = q.t;
+          r = q.r;
+          O = q.o;
+          H = q.h;
+        } else if (m == 1) {
+          a = ri(1, 9);
+          b = ri(1, 9);
+          r = a + b;
+          t = a + " + " + b;
+        } else if (m == 2) {
+          if (R() < 0.5) {
+            a = ri(5, 20);
+            b = ri(1, 9);
+            r = a + b;
+            t = a + " + " + b;
+          } else {
+            a = ri(8, 20);
+            b = ri(1, 7);
+            r = a - b;
+            t = a + " − " + b;
+          }
+        } else {
+          a = ri(2, rq ? 6 : 5);
+          b = ri(2, rq ? 7 : 5);
+          r = a * b;
+          t = a + " × " + b;
+        }
+        if (!j.g)
+          H =
+            m == 3
+              ? "Vá somando: " + Array(b).fill(a).join(" + ")
+              : t.includes("−")
+                ? `Comece em ${a} e volte ${b} passos`
+                : `Comece em ${a} e avance ${b} passos`;
+        const o = new Set([r]);
+        (O || []).forEach((x) => o.add(x));
+        while (o.size < 3) {
+          const x = r + ri(-3, 3);
+          if (x >= 0) o.add(x);
+        }
+        Q = {
+          h: H,
+          aj: 0,
+          f0: f,
+          t: j.g ? t : t + " = ?",
+          r,
+          o: [...o].sort(() => R() - 0.5),
+          f,
+          p: null,
+          g: 0,
+          si: i,
+          ph: 0,
+          req: !!rq,
+        };
+        render();
+        sfx("pop");
+        setTimeout(() => {
+          if (Q && Q.ph == 0) {
+            Q.ph = 1;
+            render();
+          }
+        }, 4000);
+      }
+      /* 🆘 PEDIR AJUDA: cada ajuda custa 25% do prêmio inicial (f0) e dá no máximo 2 ajudas. 1ª ajuda: tira uma opção errada. 2ª ajuda: mostra uma dica (ou tira outra opção). Quem pede ajuda aprende, mas ganha menos: tudo tem um preço! */
+      const custoAj = (q) => Math.max(1, Math.round(q.f0 * 0.25));
+      const ajudaUI = (q) =>
+        `<small>Vale ${brl(q.f)}</small>` +
+        (q.hs ? `<small>💡 ${q.h}</small>` : "") +
+        (q.aj < 2
+          ? `<button class=s style="margin-top:10px" data-c="ajuda()">🆘 Pedir ajuda (−${brl(custoAj(q))})</button>`
+          : "<small>Sem mais ajudas nesta conta</small>");
+      function ajuda() {
+        if (!Q || Q.p != null || Q.aj >= 2) return;
+        Q.f = Math.max(1, Q.f - custoAj(Q));
+        Q.aj++;
+        if (Q.aj == 2 && Q.h) Q.hs = 1;
+        else {
+          const w = Q.o.filter((x) => x != Q.r && !(Q.bad || []).includes(x));
+          if (w.length) (Q.bad = Q.bad || []).push(pk(w));
+        }
+        say("🆘 Ajuda usada: o prêmio diminuiu");
+        render();
+      }
+      /* ✅ RESPONDER: errou na 1ª vez? Ganha uma 2ª chance (paga 75%). Errou de novo? Mostra a resposta e paga metade. Errar faz parte de aprender! */
+      function ans(i) {
+        if (Q.p != null) return;
+        const certo = Q.o[i] == Q.r;
+        if (!certo && !Q.t2) {
+          Q.t2 = 1;
+          (Q.bad = Q.bad || []).push(Q.o[i]);
+          say("Quase! Tente de novo 💪");
+          render();
+          return;
+        }
+        Q.p = Q.o[i];
+        G.en = Math.max(0, G.en - 6);
+        Q.g = certo ? (Q.t2 ? Math.round(Q.f * 0.75) : Q.f) : Math.round(Q.f / 2);
+        if (certo) {
+          G.ok++;
+          chuva("🪙", 8);
+        } else sfx("bad");
+        ganha(Q.g);
+        save();
+        render();
+      }
+      function tCalm() {
+        G.calm = G.calm ? 0 : 1;
+        save();
+        render();
+      }
+      function dif(n) {
+        G.dif = n;
+        save();
+        say("Contas: " + ["fácil", "média", "difícil"][n - 1]);
+        render();
+      }
+      /* ⚠️ RECOMEÇAR apaga o progresso deste aparelho (pede confirmação). */
+      function resetar() {
+        if (confirm("Apagar todo o progresso e recomeçar?")) {
+          try {
+            localStorage.removeItem("cofre2");
+          } catch (e) {}
+          location.reload();
+        }
+      }
+      function mv(a, b, n) {
+        const v = n == "t" ? G[a] : Math.min(n, G[a]);
+        if (v <= 0) return;
+        G[a] = r2(G[a] - v);
+        G[b] = r2(G[b] + v);
+        save();
+        render();
+      }
+      function buy(i) {
+        const it = LOJA[i];
+        if (it.k && G[it.k]) return;
+        const b0 = G.b * RATE;
+        if (!pagar(it.v)) return;
+        if (it.k) G[it.k] = 1;
+        if (it.en) G.en = Math.min(100, G.en + it.en);
+        if (!it.k) G.lz = Math.min(100, G.lz + lzg(it));
+        N =
+          `${it.e} Comprou! ${brl(it.v)} saíram e não voltam.` +
+          (it.k ? "" : " 🎈 Lazer +" + lzg(it) + ".") +
+          (it.k
+            ? " Isso é um investimento: " + it.t.split(": ")[1] + "."
+            : ` Se tivesse guardado, em 10 dias seria ${brl(it.v * Math.pow(1 + RATE, 10))}.`) +
+          (G.b * RATE < b0
+            ? ` O cofre rendia ${brl(b0)} por dia e agora rende ${brl(G.b * RATE)}.`
+            : "");
+        save();
+        render();
+      }
+      function proj(id) {
+        const p = PROJ.find((x) => x.id == id);
+        if (pagar(p.c)) {
+          G.proj[id] = 1;
+          chuva("🎉", 14);
+          say(p.e + " " + p.n + " no ar! Vai render todo dia.");
+          save();
+          render();
+        }
+      }
+      function comp(id) {
+        const p = G.pr[id];
+        if (pagar(p)) {
+          G.inv[id] = { q: 1, c: p };
+          save();
+          render();
+        }
+      }
+      function vend(id) {
+        const p = G.pr[id],
+          h = G.inv[id],
+          l = r2(p - h.c);
+        G.c = r2(G.c + p);
+        G.xp += Math.max(0, l);
+        G.inv[id] = { q: 0, c: 0 };
+        say(
+          l >= 0
+            ? "🤑 Lucro de " + brl(l) + "!"
+            : "Prejuízo de " + brl(-l) + ". Na próxima, espere ficar caro!",
+        );
+        save();
+        render();
+      }
+      /* ==================================================================
+   PARTE 5 — TELAS (cada tela devolve um texto HTML)
+   ================================================================== */
+      const V = {
+        /* ℹ️ Tela "Sobre": avisos para crianças e responsáveis, dificuldade e botão de recomeçar. */
+        sobre() {
+          G.vi = 1;
+          save();
+          const B = (n, t) =>
+            `<button class="b ${G.dif == n ? "g" : ""}" data-c="dif(${n})">${t}</button>`;
+          return `<button class=s data-c="go('casa')">⬅ Voltar</button><div class=card><div class=huge>🧠</div><h2>Para quem joga</h2><div style="text-align:left;font-size:19px">• O dinheiro daqui é de mentirinha: não existe compra de verdade.<br>• Os juros são bem mais rápidos que na vida real, para você ver o efeito logo.<br>• Errar faz parte: tente de novo!<br>• Faça pausas, beba água e brinque fora da tela também. 💧</div></div><div class=card><div class=huge>👨‍👩‍👧</div><h2>Para os responsáveis</h2><div style="text-align:left;font-size:19px">• Nenhum dado é enviado a ninguém: o progresso fica salvo só neste aparelho.<br>• Não há compras reais, cadastro nem loteria. As "propagandas" são simuladas (para ensinar senso crítico) e vêm desligadas.<br>• Preços e juros são simplificados e aceleram o tempo: servem para ensinar ideias, não para planejar finanças reais.<br>• Combine um tempo de tela e jogue junto por alguns minutos: converse sobre cada escolha.</div></div><div class=card><h2>Dificuldade das contas</h2><div class=two>${B(1, "Fácil")}${B(2, "Médio")}</div>${B(3, "Difícil")}<button class="b x" data-c="resetar()">🗑️ Recomeçar do zero</button></div>`;
+        },
+        casa() {
+          const h = G.h,
+            ts = tasks(G.d),
+            mo = MEAL.find((m) => h >= m.a && h < m.z && !G.pg.includes(m.id)),
+            miss = MEAL.filter((m) => h >= m.z && !G.pg.includes(m.id)),
+            bl = ts.find((t) => !G.pg.includes(t.id)),
+            nm = MEAL.find((m) => h < m.a),
+            p = mo || bl,
+            face = h >= 21 ? "😴" : miss.length ? "😟" : mo ? "😋" : "😄",
+            nx = tasks(G.d + 1)
+              .map((t) => t.e)
+              .join(" ");
+          return (
+            (G.vi
+              ? ""
+              : `<div class=card style="background:#1f6f5a">👋 Primeira vez? Toque em <b>ℹ️ Sobre</b> (lá embaixo) para ver as dicas.</div>`) +
+            (G.doente
+              ? `<div class=card style="background:#7a2a5a"><div class=huge>🤒</div><h2>Você está doente!</h2>Pague o médico: ${brl(G.sg ? 10 : 25)}<button class="b g" data-c="medico()">💊 Ir ao médico</button></div>`
+              : "") +
+            atCards() +
+            (G.div > 0
+              ? `<div class=card style="background:#7a2a5a">🏦 Banco: você deve <b>${brl(G.div)}</b><small>A dívida cresce 5% por dia</small></div>`
+              : "") +
+            `<div class=card>` +
+            (p
+              ? `<h2>${mo ? "Hora do " + mo.n : p.n}</h2><div class=huge>${p.e}</div><div>${brl(mo ? MC : p.v)}</div><button class=b data-c="${mo ? `come('${mo.id}')` : `pay('${p.id}')`}">${mo ? "Comer" : "Pagar"}</button>`
+              : `<h2>Tudo certo!</h2>Vá trabalhar 💼 ou cuidar da fazenda 🌱` +
+                (nm ? `<small>Próxima refeição: ${nm.e} às ${nm.a}:00</small>` : "")) +
+            (h >= 20 || G.calm ? `<button class="b g" data-c="dormir()">😴 Dormir</button>` : "") +
+            (miss.length
+              ? `<small>😟 Pulou ${miss.map((m) => m.e).join(" ")}: trabalhos pagam metade</small>`
+              : "") +
+            `</div><div class=card>Hoje: ${MEAL.map((m) => (G.pg.includes(m.id) ? "✅" : h >= m.z ? "❌" : "⬜") + m.e).join(" ")} ${ts.map((t) => (G.pg.includes(t.id) ? "✅" : "⬜") + t.e).join(" ")}<small>${G.calm ? "🌙 Modo calmo: o tempo só passa quando você dorme" : "😴 Você dorme sozinho às 22:00"}` +
+            (nx ? ` · Amanhã vence: ${nx}` : "") +
+            `</small></div><button class=s data-c="tCalm()">🌙 Modo calmo: ${G.calm ? "sim" : "não"}</button> <button class=s data-c="go('sobre')">ℹ️ Sobre</button> <button class=s data-c="tSom()">${som ? "🔊" : "🔇"} Som</button> <button class=s data-c="tAds()">📢 Propagandas: ${G.ads ? "sim" : "não"}</button>`
+          );
+        },
+        nb() {
+          const L = [],
+            h = G.h,
+            mo = MEAL.find((m) => h >= m.a && h < m.z && !G.pg.includes(m.id)),
+            W = [];
+          if (G.doente) L.push(["🤒", "Ir ao médico (" + brl(G.sg ? 10 : 25) + ")", "casa"]);
+          Object.keys(G.at).forEach((id) =>
+            L.push([BILL[id].e, BILL[id].n + " atrasada (" + brl(G.at[id].v) + ")", "casa"]),
+          );
+          if (mo) L.push([mo.e, mo.n + " (R$ 4)", "casa"]);
+          tasks(G.d)
+            .filter((t) => !G.pg.includes(t.id))
+            .forEach((t) => L.push([t.e, t.n + " hoje (" + brl(t.v) + ")", "casa"]));
+          if (G.rq) L.push(["📩", REQ[G.rq.i], "job"]);
+          FARM.forEach((f) => {
+            const x = G.fz[f.id];
+            if (x && x.r <= G.d) L.push([f.e, f.n + " pronta para colher", "faz"]);
+          });
+          if (G.ov) L.push(["🥚", G.ov + " ovo(s) para vender", "faz"]);
+          if (G.lt) L.push(["🥛", G.lt + " leite(s) para vender", "faz"]);
+          if (G.div > 0) L.push(["🏦", "Pagar a dívida (" + brl(G.div) + ")", "cofre"]);
+          if (G.lz < 30) L.push(["🎈", "Se divertir (lazer baixo)", "loja"]);
+          if (h >= 20 || G.calm) L.push(["😴", "Dormir", "casa"]);
+          const l = lv(),
+            nx = NIV[l],
+            pj = PROJ.find((p) => !G.proj[p.id]),
+            tot = G.c + G.b;
+          if (nx)
+            W.push([
+              "⭐",
+              "Próximo nível: " + TIT[l],
+              G.xp - NIV[l - 1],
+              nx - NIV[l - 1],
+              "faltam " + (nx - G.xp) + " XP",
+            ]);
+          if (pj) {
+            if (l < pj.l)
+              W.push([
+                pj.e,
+                pj.n + " (nível " + pj.l + ")",
+                G.xp - NIV[l - 1],
+                NIV[pj.l - 1] - NIV[l - 1],
+                "faltam " + (NIV[pj.l - 1] - G.xp) + " XP",
+              ]);
+            else
+              W.push([
+                pj.e,
+                "Criar " + pj.n,
+                Math.min(pj.c, tot),
+                pj.c,
+                "faltam " + brl(Math.max(0, pj.c - tot)),
+              ]);
+          }
+          if (!G.pc)
+            W.push([
+              "💻",
+              "Computador novo",
+              Math.min(400, tot),
+              400,
+              "faltam " + brl(Math.max(0, 400 - tot)),
+            ]);
+          const mt = [100, 250, 500, 1000, 2000].find((x) => x > G.b);
+          if (mt) W.push(["🏦", "Cofre com " + brl(mt), G.b, mt, "faltam " + brl(mt - G.b)]);
+          return (
+            `<button class=s data-c="go('casa')">⬅ Voltar</button><div class=card><div class=huge>💻</div><h2>Tarefas de agora</h2>` +
+            (L.length
+              ? L.map(
+                  (x) =>
+                    `<button class=b style="text-align:left;font-size:20px" data-c="go('${x[2]}')">${x[0]} ${x[1]}</button>`,
+                ).join("")
+              : "<div>Tudo em dia! 🎉<small>Trabalhe, cuide da fazenda ou descanse.</small></div>") +
+            `</div><div class=card><h2>Quanto falta</h2>` +
+            W.map(
+              (w) =>
+                `<div style="text-align:left;margin:12px 0">${w[0]} <b>${w[1]}</b><div style="height:14px;background:#0006;border-radius:8px;overflow:hidden;margin:4px 0"><i style="display:block;height:100%;width:${Math.max(0, Math.min(100, (w[2] / w[3]) * 100))}%;background:var(--gold)"></i></div><small>${w[4]}</small></div>`,
+            ).join("") +
+            "</div>"
+          );
+        },
+        faz() {
+          return (
+            FARM.slice()
+              .sort((a, b) => a.l - b.l)
+              .map((f) => {
+                const x = G.fz[f.id];
+                if (lv() < f.l)
+                  return `<div class=card><div class=huge>🔒</div>Nível ${f.l}: ${f.e} ${f.n}</div>`;
+                const rd = x && x.r <= G.d && !cut("agua");
+                return `<div class=card><div class=huge>${x && !rd ? "🌱" : f.e}</div><b>${f.n}</b><small>${rd ? "Pronta para colher!" : x ? "Crescendo... pronta no dia " + x.r : "Custa " + brl(f.c) + (f.tree ? " · dá fruta de novo e de novo" : " · colhe e vende " + brl(f.v))}</small><button class="b ${rd ? "g" : ""}" ${(x && !rd) || (!x && G.c + G.b < f.c) ? "disabled" : ""} data-c="${rd ? `colher('${f.id}')` : `plantar('${f.id}')`}">${rd ? "Colher " + brl(f.v) : x ? "⏳ Esperando" : "Plantar"}</button></div>`;
+              })
+              .join("") +
+            (lv() < 2
+              ? `<div class=card><div class=huge>🔒</div>Nível 2: 🐔 Galinhas</div>`
+              : `<div class=card><div class=huge>🐔 ×${G.ch}</div><small>Galinha ${brl(30)} · ração ${brl(1)} por galinha por dia · ovo ${brl(4)} · máximo 5</small><div>🥚 ${G.ov} ovos</div><button class=b ${G.ch >= 5 || G.c + G.b < 30 ? "disabled" : ""} data-c="galinha()">Comprar galinha</button><button class="b g" ${G.ov ? "" : "disabled"} data-c="ovos()">Vender ovos ${brl(G.ov * 4)}</button></div>`) +
+            (lv() < 5
+              ? `<div class=card><div class=huge>🔒</div>Nível 5: 🐄 Vacas</div>`
+              : `<div class=card><div class=huge>🐄 ×${G.vc}</div><small>Vaca ${brl(150)} · ração ${brl(3)} por vaca por dia · leite ${brl(12)} · máximo 3</small><div>🥛 ${G.lt} leites</div><button class=b ${G.vc >= 3 || G.c + G.b < 150 ? "disabled" : ""} data-c="vaca()">Comprar vaca</button><button class="b g" ${G.lt ? "" : "disabled"} data-c="leite()">Vender leite ${brl(G.lt * 12)}</button></div>`)
+          );
+        },
+        job() {
+          if (Q) {
+            if (Q.ph == 0)
+              return `<div class=card>${SC[Q.si]}<h2>⏳ ${Q.req ? "Atendendo o pedido..." : "Trabalhando..."}</h2></div>`;
+            const q = Q,
+              d = q.p != null;
+            return (
+              `<div class=card><div class=huge style="${q.t.length > 12 ? "font-size:26px;line-height:1.3" : ""}">${q.t}</div>` +
+              q.o
+                .map(
+                  (x, i) =>
+                    `<button class="b ${d ? (x == q.r ? "ok" : x == q.p ? "x" : "") : ""}" ${d || (q.bad || []).includes(x) ? "disabled" : ""} data-c="ans(${i})">${x}</button>`,
+                )
+                .join("") +
+              (d ? "" : ajudaUI(q)) +
+              (d
+                ? `<h2>${q.p == q.r ? "✅ Isso mesmo!" : "Quase! Era " + q.r}</h2>Ganhou ${brl(q.g)}<button class="b g" data-c="go('job')">Continuar</button>`
+                : "") +
+              "</div>"
+            );
+          }
+          return (
+            reqCard() +
+            JOBS.map((j, i) =>
+              lv() < j.l
+                ? i && lv() < JOBS[i - 1].l
+                  ? ""
+                  : `<div class=card>🔒 Próximo serviço: nível ${j.l}</div>`
+                : `<button class=b ${j.b && cut(j.b) ? "disabled" : ""} data-c="start(${i})">${j.e} ${j.n}${j.b && cut(j.b) ? " 🔌" : ""}<small style="color:#08203a">${j.s ? j.s + " · " : ""}ganha ${brl(Math.round(j.v * (G.pc && !cut("luz") ? 1.3 : 1) * (G.bk ? 1.15 : 1) * (fraco() ? 0.5 : 1)))}</small></button>`,
+            ).join("") +
+            (lv() >= 2
+              ? `<button class="b g" data-c="go('troca')">💸 Comprar e vender</button>`
+              : "<div class=card>🔒 Comprar e vender: nível 2</div>")
+          );
+        },
+        troca() {
+          return (
+            `<button class=s data-c="go('job')">⬅ Voltar</button>` +
+            MERC.filter((m) => lv() >= m.l)
+              .map((m) => {
+                const p = G.pr[m.id],
+                  h = G.inv[m.id] || { q: 0, c: 0 };
+                return (
+                  `<div class=card><div class=huge>${m.e}</div><b>${m.n}</b>: ${brl(p)}<div>${p < m.b * 0.85 ? "😍 Barato!" : p > m.b * 1.15 ? "🤑 Caro!" : "🙂 Normal"}</div>` +
+                  (h.q
+                    ? `<small>Pagou ${brl(h.c)} · lucro se vender: ${brl(p - h.c)}</small>`
+                    : "") +
+                  `<button class=b data-c="comp('${m.id}')" ${h.q || G.c < p ? "disabled" : ""}>Comprar</button><button class="b g" data-c="vend('${m.id}')" ${h.q ? "" : "disabled"}>Vender</button></div>`
+                );
+              })
+              .join("")
+          );
+        },
+        cofre() {
+          return (
+            `<div class=card><div class=huge>🏦</div><h2>${brl(G.b)}</h2><div>Amanhã rende +${brl(G.b * RATE)}</div><small>Em 10 dias: ${brl(G.b * Math.pow(1 + RATE, 10))}</small><canvas id=gr width=520 height=210 style="width:100%;margin-top:10px;border-radius:14px;background:#0004"></canvas></div><div class=two><button class=b data-c="mv('c','b',10)">Guardar 10</button><button class=b data-c="mv('c','b','t')">Guardar tudo</button><button class="b g" data-c="mv('b','c',10)">Sacar 10</button><button class="b g" data-c="mv('b','c','t')">Sacar tudo</button></div>` +
+            emprCard()
+          );
+        },
+        loja() {
+          return (
+            (N ? `<div class=card style="background:#7a2a5a">${N}</div>` : "") +
+            LOJA.map((it, i) => {
+              const own = it.k && G[it.k];
+              return `<div class=card><div class=huge>${it.e}</div><b>${it.n}</b><small>${it.t}${it.k ? "" : " · 🎈 lazer +" + lzg(it)}</small><button class=b ${own || G.c + G.b < it.v ? "disabled" : ""} data-c="buy(${i})">${own ? "✔ Já tem" : brl(it.v)}</button></div>`;
+            }).join("")
+          );
+        },
+        proj() {
+          return PROJ.map((p) =>
+            lv() < p.l
+              ? `<div class=card><div class=huge>🔒</div>Nível ${p.l}: ${p.e} ${p.n}<small>Rende ~${brl(p.r)} por dia · faltam ${NIV[p.l - 1] - G.xp} XP</small></div>`
+              : `<div class=card><div class=huge>${p.e}</div><b>${p.n}</b><small>Rende ~${brl(p.r)} por dia · se paga em ${Math.ceil(p.c / p.r)} dias${G.c + G.b < p.c ? " · faltam " + brl(p.c - G.c - G.b) : ""}</small>` +
+                (G.proj[p.id]
+                  ? "<h2>✅ No ar!</h2>"
+                  : `<button class="b g" ${G.c + G.b < p.c ? "disabled" : ""} data-c="proj('${p.id}')">Criar ${brl(p.c)}</button>`) +
+                "</div>",
+          ).join("");
+        },
+      };
+      /* ==================================================================
+   PARTE 6 — DESENHO NA TELA (render e canvas)
+   ================================================================== */
+
+      /* 🖼️ CANVAS = uma "folha de papel" digital dentro da página (<canvas> no HTML).
+   Com JavaScript pegamos o "pincel" (getContext) e mandamos desenhar.
+   Passos: 1) achar o canvas  2) pegar o pincel  3) escolher cor e espessura
+           4) beginPath() começa um traço  5) moveTo/lineTo traçam  6) stroke() desenha.
+   Este gráfico compara o cofre COM juros (linha dourada) e o dinheiro parado (tracejada). */
+      function desenhaGrafico() {
+        const cv = $("gr"); // 1) o elemento <canvas> criado na tela do Cofre
+        if (!cv) return;
+        const c = cv.getContext("2d"); // 2) o pincel 2D
+        const W = cv.width,
+          H = cv.height,
+          M = 34; // largura, altura e margem
+        c.clearRect(0, 0, W, H); // limpa o desenho anterior
+        c.font = "18px system-ui,sans-serif";
+        c.textAlign = "center";
+        if (G.b <= 0) {
+          c.fillStyle = "#c9c4ff";
+          c.fillText("Guarde dinheiro para ver o gráfico crescer 📈", W / 2, H / 2);
+          return;
+        }
+        const ini = G.b,
+          fim = G.b * Math.pow(1 + RATE, 10); // hoje e daqui a 10 dias
+        const x = (d) => M + (d * (W - 2 * M)) / 10; // converte DIA em posição horizontal
+        const y = (v) => H - M - ((v - ini) / (fim - ini)) * (H - 2 * M); // converte VALOR em posição vertical
+        // Linha tracejada: dinheiro parado, sem juros
+        c.strokeStyle = "#c9c4ff";
+        c.lineWidth = 2;
+        c.setLineDash([6, 6]);
+        c.beginPath();
+        c.moveTo(x(0), y(ini));
+        c.lineTo(x(10), y(ini));
+        c.stroke();
+        c.setLineDash([]);
+        // Linha dourada: cada dia o cofre rende 3% sobre o valor do dia anterior (juros compostos)
+        c.strokeStyle = "#ffd23f";
+        c.lineWidth = 4;
+        c.beginPath();
+        for (let d = 0; d <= 10; d++) {
+          const v = ini * Math.pow(1 + RATE, d);
+          if (d == 0) c.moveTo(x(d), y(v));
+          else c.lineTo(x(d), y(v));
+        }
+        c.stroke();
+        // Bolinhas verdes, uma por dia (arc = círculo)
+        c.fillStyle = "#2ee6b8";
+        for (let d = 0; d <= 10; d++) {
+          c.beginPath();
+          c.arc(x(d), y(ini * Math.pow(1 + RATE, d)), 5, 0, Math.PI * 2);
+          c.fill();
+        }
+        // Textos (fillText)
+        c.fillStyle = "#fff";
+        c.textAlign = "left";
+        c.fillText("Hoje: " + brl(ini), M, H - 8);
+        c.textAlign = "right";
+        c.fillText("Dia 10: " + brl(fim), W - M, 22);
+        c.fillStyle = "#c9c4ff";
+        c.fillText("- - sem juros", W - M, H - 8);
+      }
+
+      /* 🎨 render() REDESENHA a tela inteira a partir de G. Sempre que algo muda, chamamos render(). */
+      function render() {
+        document.body.classList.toggle("calm", !!G.calm);
+        const l = lv(),
+          nx = NIV[l];
+        $("top").innerHTML =
+          `<div>👛<br><b>${brl(G.c)}</b></div><div>🏦<br><b>${brl(G.b)}</b></div><div data-c="pausa()">🕐 <b id=clk>${clk()}</b>${pz ? " ⏸" : ""}<br>Dia ${G.d} ${TIT[l - 1].split(" ")[0]}</div><div id=bar><i style="width:${nx ? ((G.xp - NIV[l - 1]) / (nx - NIV[l - 1])) * 100 : 100}%"></i></div>`;
+        $("v").innerHTML = V[T]();
+        if (T == "cofre") desenhaGrafico();
+        $("av").innerHTML = avBar();
+        const tab = T == "troca" ? "job" : T;
+        $("n").innerHTML = [
+          ["casa", "🏠", "Casa"],
+          ["job", "💼", "Trabalho"],
+          ["cofre", "🏦", "Cofre"],
+          ["loja", "🛒", "Loja"],
+          ["proj", "🚀", "Projetos"],
+          ["faz", "🌱", "Fazenda"],
+        ]
+          .map(
+            ([k, e, n]) =>
+              `<button class="${k == tab ? "on" : ""}" data-c="go('${k}')"><span>${e}</span>${n}</button>`,
+          )
+          .join("");
+        const m = $("m");
+        if (M) {
+          m.hidden = false;
+          m.innerHTML =
+            `<div class=card><div class=huge>${M.win ? "🏆" : "🔔"}</div><h2>${M.win ? "🎊 PARABÉNS! 🎊" : "Bom dia! Dia " + G.d}</h2>` +
+            (M.length
+              ? M.map(
+                  (x) =>
+                    `<div class=ln><span>${x[0]} ${x[1]}</span><b style="color:var(--gold)">${typeof x[2] == "number" ? (x[2] < 0 ? "−" : "+") + brl(Math.abs(x[2])) : x[2]}</b></div>`,
+                ).join("")
+              : "<div>Nada rendeu ainda. Guarde no cofre ou crie projetos!</div>") +
+            `<button class="b g" data-c="fecha()">Beleza!</button></div>`;
+        } else m.hidden = true;
+      }
+      function fecha() {
+        M = null;
+        render();
+      }
+      const F = {
+        ajuda,
+        pagaAt,
+        tCalm,
+        dif,
+        resetar,
+        adGo,
+        adX,
+        tAds,
+        medico,
+        emp,
+        quita,
+        vaca,
+        leite,
+        pedido,
+        go,
+        pay,
+        dormir,
+        start,
+        ans,
+        mv,
+        buy,
+        proj,
+        comp,
+        vend,
+        fecha,
+        come,
+        plantar,
+        colher,
+        galinha,
+        ovos,
+        tSom,
+        pausa,
+      };
+      /* ==================================================================
+   PARTE 7 — EVENTOS (cliques) E RELÓGIO (setInterval)
+   ================================================================== */
+      /* 👆 Um único "ouvinte" de cliques: cada botão tem data-c="funcao(argumentos)". Aqui lemos esse texto e chamamos a função correspondente da lista F (só funções da lista F podem ser chamadas, por segurança). */
+      document.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-c]");
+        if (!b || b.disabled) return;
+        const m = b.dataset.c.match(/^(\w+)\((.*)\)$/);
+        if (!m || !F[m[1]]) return;
+        const a = m[2]
+          ? m[2]
+              .split(",")
+              .map((x) => x.trim().replace(/^'|'$/g, ""))
+              .map((x) => (x !== "" && !isNaN(x) ? +x : x))
+          : [];
+        sfx("pop");
+        F[m[1]](...a);
+      });
+      render();
+      let hh = Math.floor(G.h);
+      /* ⏱️ RELÓGIO: a cada segundo o tempo do jogo anda. No modo calmo ele fica parado: o dia só passa quando você escolhe dormir. */
+      setInterval(() => {
+        if (M || pz || G.calm) return;
+        G.h += 1 / 15;
+        if (G.h >= 22) {
+          dormir();
+          return;
+        }
+        const e = $("clk");
+        if (e) e.textContent = clk();
+        const n = Math.floor(G.h);
+        if (n != hh) {
+          hh = n;
+          save();
+          const m = MEAL.find((x) => x.a == n);
+          if (m) {
+            sfx("bell");
+            say(m.e + " Hora do " + m.n + "!");
+          } else if (n == 20) {
+            sfx("bell");
+            say("😴 Já é tarde! Hora de ir dormir");
+          } else if (n == 21) say("😴 Você dorme sozinho daqui a 1 hora");
+          if (!G.rq && n >= 8 && n <= 19 && R() < 0.4) {
+            const u = JOBS.map((j, i) => i).filter((i) => lv() >= JOBS[i].l);
+            G.rq = { i: u[ri(0, u.length - 1)] };
+            sfx("bell");
+            say("📩 Chegou um pedido! Veja em Trabalho");
+          }
+          G.en = Math.max(0, G.en - 4);
+          G.lz = Math.max(0, G.lz - 3);
+          if (G.lz < 30 && n % 3 == 0) say("🎈 Está entediado! Divirta-se na Loja");
+          if (G.div > 0 && n % 4 == 0) {
+            sfx("bad");
+            say("🏦 Banco: você deve " + brl(G.div) + "!");
+          }
+          if (
+            G.ads &&
+            !Q &&
+            n >= 9 &&
+            n <= 20 &&
+            T != "loja" &&
+            T != "proj" &&
+            $("ad").hidden &&
+            R() < 0.3
+          )
+            showAd();
+          if (!(Q && Q.ph == 0)) render();
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
